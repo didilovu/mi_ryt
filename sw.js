@@ -1,8 +1,8 @@
 const ROOT = new URL('./', self.location.href).href;
 // Scope the cache to this installation so other apps on the same domain keep their caches.
 const PREFIX = `moy-ritm-${new URL(ROOT).pathname}-`;
-const CACHE = PREFIX + 'moy-ritm-38f66b94d191';
-const ASSETS = ["assets/charts-BsEDvrt-.js","assets/index-DUDNE-P3.js","assets/index-hW_h-KiG.css","assets/vendor-DkU-GevM.js"];
+const CACHE = PREFIX + 'moy-ritm-39f3c57a8174';
+const ASSETS = ["assets/charts-BsEDvrt-.js","assets/index-D1kfNtrm.js","assets/index-hW_h-KiG.css","assets/vendor-DkU-GevM.js"];
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE);
