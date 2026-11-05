@@ -1,54 +1,26 @@
-const CACHE = "moy-ritm-v1";
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    (async () => {
-      const cache = await caches.open(CACHE);
-      const response = await fetch("/", { cache: "reload" });
-      if (!response.ok) throw Error("App shell unavailable");
-      const html = await response.clone().text();
-      const assets = [
-        ...html.matchAll(/(?:src|href)="(\/assets\/[^\"]+)"/g),
-      ].map((m) => m[1]);
-      await cache.addAll([
-        ...new Set([
-          "/manifest.webmanifest",
-          "/icon.svg",
-          "/icon-192.png",
-          "/icon-512.png",
-          "/apple-touch-icon.png",
-          ...assets,
-        ]),
-      ]);
-      await cache.put("/", response);
-      await self.skipWaiting();
-    })(),
-  );
+const ROOT = new URL('./', self.location.href).href;
+// Scope the cache to this installation so other apps on the same domain keep their caches.
+const PREFIX = `moy-ritm-${new URL(ROOT).pathname}-`;
+const CACHE = PREFIX + 'moy-ritm-v1';
+const ASSETS = /* BUILD_ASSETS */ [];
+self.addEventListener('install', event => {
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE);
+    await cache.addAll(['./', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', ...ASSETS].map(path=>new URL(path,ROOT).href));
+    await self.skipWaiting();
+  })());
 });
-self.addEventListener("activate", (event) =>
-  event.waitUntil(
-    (async () => {
-      for (const key of await caches.keys())
-        if (key.startsWith("moy-ritm-") && key !== CACHE)
-          await caches.delete(key);
-      await self.clients.claim();
-    })(),
-  ),
-);
-self.addEventListener("fetch", (event) => {
-  if (
-    event.request.method !== "GET" ||
-    new URL(event.request.url).origin !== self.location.origin
-  )
-    return;
-  event.respondWith(
-    (async () => {
-      const cache = await caches.open(CACHE);
-      if (event.request.mode === "navigate")
-        return (await cache.match("/")) || fetch(event.request);
-      return (
-        (await cache.match(event.request, { ignoreVary: true })) ||
-        fetch(event.request)
-      );
-    })(),
-  );
+self.addEventListener('activate', event => {
+  event.waitUntil((async () => {
+    for(const name of await caches.keys()) if(name.startsWith(PREFIX)&&name!==CACHE) await caches.delete(name);
+    await self.clients.claim();
+  })());
+});
+self.addEventListener('fetch', event => {
+  if(event.request.method!=='GET'||!event.request.url.startsWith(ROOT)) return;
+  event.respondWith((async () => {
+    const cache = await caches.open(CACHE);
+    if(event.request.mode==='navigate') return (await cache.match(ROOT,{ignoreVary:true}))||fetch(event.request);
+    return (await cache.match(event.request,{ignoreVary:true}))||fetch(event.request);
+  })());
 });

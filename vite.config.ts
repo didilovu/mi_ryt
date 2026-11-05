@@ -1,9 +1,10 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, readdirSync } from "node:fs";
 import { createHash } from "node:crypto";
 export default defineConfig({
+  base: "./",
   plugins: [
     react(),
     tailwindcss(),
@@ -17,7 +18,14 @@ export default defineConfig({
         const path = "dist/sw.js";
         writeFileSync(
           path,
-          readFileSync(path, "utf8").replace("moy-ritm-v1", `moy-ritm-${hash}`),
+          readFileSync(path, "utf8")
+            .replace("moy-ritm-v1", `moy-ritm-${hash}`)
+            .replace(
+              "/* BUILD_ASSETS */ []",
+              JSON.stringify(
+                readdirSync("dist/assets").map((file) => `assets/${file}`),
+              ),
+            ),
         );
       },
     },
